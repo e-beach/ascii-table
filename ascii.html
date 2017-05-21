@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+    <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="https://unpkg.com/vue"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.1.0/sprintf.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script type="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style>
+    .char {
+        color: #ff0000;
+    }
+    table {
+       max-width: 100px;
+       margin-top: 5px;
+       outline: 1px solid black;
+    }
+    tr:not(:first-child):hover {
+        background-color: #97ffff;
+    }
+    @media (max-width: 768px) {
+    .container {
+        max-width: 200px;
+    }
+}
+</style>
+<script>
+        $(document).ready(function() {
+            $('#char').keydown(function() {
+                $('#char').val('');
+            });
+            $('#char').keyup(function() {
+                ConvertChar();
+            });
+            $('#dec').keyup(function() {
+                ConvertDec();
+            });
+            //$('#hex').change(function() {
+            //$('#hex')[0].oninput = function() {
+            $('#hex').keyup(function() {
+                ConvertHex();
+            //};
+            });
+            //$('#bin').change(function() {
+            //$('#bin')[0].oninput = function() {
+            $('#bin').keyup(function() {
+                ConvertBin();
+            //};
+            });
+
+            $(".dtable tr").click(function() {
+                var i=$(this).index();
+                //if( i==0 ) return;
+                var id=$(this).parent().parent().prop("id");
+                if( id=="calc" ) return;
+                var dec = $(this).children("td:nth-child(1)").text();
+                var hex = $(this).children("td:nth-child(2)").text();
+                var bin = $(this).children("td:nth-child(3)").text();
+                var chr = $(this).children("td:nth-child(4)").text();
+                var desc = $(this).children("td:nth-child(5)").html();
+
+                $("#dialog").dialog({
+                  modal: true,
+                  title: "ASCII char "+chr,
+                  buttons: [{
+                      icons: { primary: "ui-icon-close" },
+                      text: "Close",
+                    click: function() {
+                      $( this ).dialog( "close" );
+                    }
+                  }]
+                });
+                $("#dialog p:first-child").html(chr);
+                $("#dialog p:nth-child(3)").html(dec);
+                $("#dialog p:nth-child(5)").html(hex);
+                $("#dialog p:nth-child(7)").html(bin);
+                if(desc=="&nbsp;") {
+                    $("#dialog p:nth-child(8)").hide();
+                    $("#dialog p:nth-child(9)").hide();
+                }
+                else {
+                    $("#dialog p:nth-child(9)").html(desc);
+                    $("#dialog p:nth-child(8)").show();
+                    $("#dialog p:nth-child(9)").show();
+                }
+            });
+            $("tr a").click(function(e){
+                e.stopPropagation();
+            });
+
+            InitExt();
+        });
+
+        function InitExt() {
+            for(var i=0; i<128; i++) {
+                var c=String.fromCharCode(128+i);
+                var k=i+1;
+                $("#ext tbody tr:nth-child("+k+") td:nth-child(4)").html(c);
+            }
+        }
+        function GetEscape(d,h) {
+            code = '\\x'+h;
+            if( d==0 ) code='\\0';
+            if( d==7 ) code='\\a';
+            if( d==8 ) code='\\b';
+            if( d==9 ) code='\\t';
+            if( d==10 ) code='\\n';
+            if( d==11 ) code='\\v';
+            if( d==12 ) code='\\f';
+            if( d==13 ) code='\\r';
+            if( d==34 ) code='\\\"';
+            if( d==39 ) code='\\\'';
+            if( d==63 ) code='\\\?';
+            if( d==92 ) code='\\\\';
+            return code;
+        }
+        function ConvertChar()
+        {
+            var c = $('#char').val();
+            if(c=='')return;
+            var d = c.charCodeAt(0);
+            $('#dec').val(d);
+            var h=d.toString(16).toUpperCase();
+            var b=d.toString(2);
+            while( b.length<8 ) b = "0"+b;
+            $('#hex').val(h);
+            $('#bin').val(b);
+            $('#html').val('&#'+d+';');
+            $('#escape').val(GetEscape(d,h));
+        }
+        function ConvertDec()
+        {
+            var d = $('#dec').val();
+            if(d=='') return;
+            d = parseInt(d);
+            if(d>255 || d<0) return;
+            var c = String.fromCharCode(d);
+            $('#char').val(c);
+            var h=d.toString(16).toUpperCase();
+            while( h.length<2 ) h = "0"+h;
+            var b=d.toString(2);
+            while( b.length<8 ) b = "0"+b;
+            $('#hex').val(h);
+            $('#bin').val(b);
+            $('#html').val('&#'+d+';');
+            $('#escape').val(GetEscape(d,h));
+        }
+        function ConvertHex()
+        {
+            var h = $('#hex').val();
+            while( h.length<2 ) h = "0"+h;
+            if(h.length!=2) return;
+            var d = parseInt(h,16);
+            if(d>255 || d<0) return;
+            var c = String.fromCharCode(d);
+            $('#char').val(c);
+            h=d.toString(16).toUpperCase();
+            while( h.length<2 ) h = "0"+h;
+            var b=d.toString(2);
+            while( b.length<8 ) b = "0"+b;
+            $('#dec').val(d);
+            //$('#hex').val(h);
+            $('#bin').val(b);
+            $('#html').val('&#'+d+';');
+            $('#escape').val(GetEscape(d,h));
+        }
+        function ConvertBin()
+        {
+            var b = $('#bin').val();
+            if(b.length>8) return;
+            if(b.length==0) return;
+            d = parseInt(b,2);
+            if(d>255 || d<0) return;
+            c = String.fromCharCode(d);
+            $('#char').val(c);
+            var h=d.toString(16).toUpperCase();
+            while( h.length<2 ) h = "0"+h;
+            b=d.toString(2);
+            while( b.length<8 ) b = "0"+b;
+            $('#dec').val(d);
+            $('#hex').val(h);
+            //$('#bin').val(b);
+            $('#html').val('&#'+d+';');
+            $('#escape').val(GetEscape(d,h));
+        }
+    </script>
+<head>
+    <title>Ascii Table</title>
+</head>
+<body>
+
+    <div id='app'>
+        <div class="container">
+            <h1 class="jumbotron text-center"> ASCII TABLE </h1>
+    <div class="row">
+        <form class="col-xs-12">
+        <table class="calc" id="calc">
+            <tbody><tr>
+            <td>
+                <table>
+                    <tbody><tr>
+                        <td>Char:</td>
+                        <td>HTML Code:</td>
+                        <td>Escape Code:</td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" id="char" autofocus="" style="background-repeat: repeat; background-image: none; background-position: 0% 0%;"></td>
+                        <td><input type="text" id="html" class="outtext" readonly=""></td>
+                        <td><input type="text" id="escape" class="outtext" readonly=""></td>
+                    </tr>
+                </tbody></table>
+            </td>
+            </tr>
+            <tr>
+            <td>
+                <table>
+                    <tbody><tr>
+                        <td>Decimal:</td>
+                        <td>Hex:</td>
+                        <td>Binary:</td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" id="dec"></td>
+                        <td><input type="text" id="hex"></td>
+                        <td><input type="text" id="bin"></td>
+                    </tr>
+                </tbody></table>
+            </td>
+            </tr>
+        </tbody></table>
+        </form>
+    </div>
+            <div class="row">
+                <div v-for="code in codes" class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                    <table>
+                        <tr>
+                            <th class="col-xs-12 col-sm-6 col-md-3" v-for="x in ['dec', 'hex', 'html', 'char']">
+                                {{ x }}
+                            </th>
+                        </tr>
+
+                        <tr v-for="char in code">
+                            <td class="col-xs-12 col-sm-6 col-md-3" v-for="prop in [ char.dec, char.hex, char.html, char.symbol, ]" data-toggle="tooltip" v-bind:title="char.description"
+                            data-delay='{"show": "1", "hide": "1"}'>
+                            <span :class="isChar(char, prop)">
+                                {{ prop }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+</body>
+<script>
+    const codes = new Array(128);
+
+    codes [0] =  {symbol: "NUL", description: "Null char"};
+    codes [1] =  {symbol: "SOH", description: "Start of Heading"};
+    codes [2] =  {symbol: "STX", description: "Start of Text"};
+    codes [3] =  {symbol: "ETX", description: "End of Text"};
+    codes [4] =  {symbol: "EOT", description: "End of Transmission"};
+    codes [5] =  {symbol: "ENQ", description: "Enquiry"};
+    codes [6] =  {symbol: "ACK", description: "Acknowledgment"};
+    codes [7] =  {symbol: "BEL", description: "Bell"};
+    codes [8] =  {symbol: "BS ", description: "Back Space"};
+    codes [9] =  {symbol: "HT ", description: "Horizontal Tab"};
+    codes[10] =  {symbol: "LF ", description: "Line Feed"};
+    codes[11] =  {symbol: "VT ", description: "Vertical Tab"};
+    codes[12] =  {symbol: "FF ", description: "Form Feed"};
+    codes[13] =  {symbol: "CR ", description: "Carriage Return"};
+    codes[14] =  {symbol: "SO ", description: "Shift Out / X-On"};
+    codes[15] =  {symbol: "SI ", description: "Shift In / X-Off"};
+    codes[16] =  {symbol: "DLE", description: "Data Line Escape"};
+    codes[17] =  {symbol: "DC1", description: "Device Control 1 (oft. XON)"};
+    codes[18] =  {symbol: "DC2", description: "Device Control 2"};
+    codes[19] =  {symbol: "DC3", description: "Device Control 3 (oft. XOFF)"};
+    codes[20] =  {symbol: "DC4", description: "Device Control 4"};
+    codes[21] =  {symbol: "NAK", description: "Negative Acknowledgement"};
+    codes[22] =  {symbol: "SYN", description: "Synchronous Idle"};
+    codes[23] =  {symbol: "ETB", description: "End of Transmit Block"};
+    codes[24] =  {symbol: "CAN", description: "Cancel"};
+    codes[25] =  {symbol: "EM ", description: "End of Medium"};
+    codes[26] =  {symbol: "SUB", description: "Substitute"};
+    codes[27] =  {symbol: "ESC", description: "Escape"};
+    codes[28] =  {symbol: "FS ", description: "File Separator"};
+    codes[29] =  {symbol: "GS ", description: "Group Separator"};
+    codes[30] =  {symbol: "RS ", description: "Record Separator"};
+    codes[31] =  {symbol: "US ", description: "Unit Separator"};
+    codes[32] =  {symbol: "space" }
+    codes[127] = {symbol: "DEL"  }
+
+    for (let i = 0; i < 128; i++){
+        codes[i] = codes[i] || {
+            symbol: String.fromCharCode(i),
+        }
+        codes[i].dec = i;
+        codes[i].hex = sprintf("%x", i);
+        codes[i].html = sprintf("&#%03d;", i);
+        codes[i].oct = sprintf("%o", i);
+    }
+    console.log(codes);
+
+    const vm = new Vue({
+        el: '#app',
+        data: {
+            codes: _.chunk(codes, 32),
+            isChar: (char, prop) => char.symbol === prop ? "char" : "",
+        },
+    });
+
+</script>
+</html>
