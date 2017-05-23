@@ -14,42 +14,48 @@ crossorigin="anonymous"></script>
 
 
 .char {
-        color: #ff0000;
+        color: #cc00cc;
+}
+
+.hex {
+    // color: #00aa00;
 }
 
 #ascii-table {
-    width:619px;
+    width:412px;
     margin:0 auto;
     margin-top: 5px;
 }
 
 #ascii-table tr th {
     text-align: center;
+    font-weight: normal;
 }
 
 #ascii-table tr td {
     text-align: center;
+    font-weight: bold;
 }
 
-#ascii-table: tr:not(:first-child):hover {
+#ascii-table tr:not(:first-child):hover {
     background-color: #97ffff;
 }
 
 #ascii-table table {
-       width: 135px;
+       width: 90px;
        margin: 3px;
        outline: 1px solid black;
        float: left;
 }
 
-@media(max-width:760px){
+@media(max-width:507px){
     #ascii-table {
-        width:310px;
+        width:205px;
     }
 }
 
 #calc {
-    float: right;
+    margin:0 auto;
 }
 
 #calc input {
@@ -87,6 +93,23 @@ $(document).ready(function() {
 
 });
 
+function clear(c){
+    $('#char').val("");
+    $('#hex').val("");
+    $('#bin').val("");
+    $('#dec').val("");
+    $('#html').val("");
+    $('#escape').val("");
+    set(-1);
+}
+
+let prev;
+function set(d){
+    $("#" + prev).css("background-color", "#ffffff");
+    $("#" + d).css("background-color", "#abcdef");
+    prev = d;
+}
+
 function GetEscape(d,h) {
     code = '\\x'+h;
     if( d==0 ) code='\\0';
@@ -106,22 +129,22 @@ function GetEscape(d,h) {
 
 function ConvertChar() {
     var c = $('#char').val();
-    if(c=='')return;
-    // asdfasdf
+    if(c=='') return clear();
     var d = c.charCodeAt(0);
     $('#dec').val(d);
     var h=d.toString(16).toUpperCase();
     var b=d.toString(2);
-    // comment
     while( b.length<8 ) b = "0"+b;
     $('#hex').val(h);
     $('#bin').val(b);
     $('#html').val('&#'+d+';');
     $('#escape').val(GetEscape(d,h));
+    set(d); 
 }
+
 function ConvertDec() {
     var d = $('#dec').val();
-    if(d=='') return;
+    if(d=='') return clear();
     d = parseInt(d);
     if(d>255 || d<0) return;
     var c = String.fromCharCode(d);
@@ -134,9 +157,12 @@ function ConvertDec() {
     $('#bin').val(b);
     $('#html').val('&#'+d+';');
     $('#escape').val(GetEscape(d,h));
+    set(d); 
 }
+
 function ConvertHex() {
     var h = $('#hex').val();
+    if (h == "") return clear();
     while( h.length<2 ) h = "0"+h;
     if(h.length!=2) return;
     var d = parseInt(h,16);
@@ -148,29 +174,33 @@ function ConvertHex() {
     var b=d.toString(2);
     while( b.length<8 ) b = "0"+b;
     $('#dec').val(d);
-            //$('#hex').val(h);
-            $('#bin').val(b);
-            $('#html').val('&#'+d+';');
-            $('#escape').val(GetEscape(d,h));
-    }
+    //$('#hex').val(h);
+    $('#bin').val(b);
+    $('#html').val('&#'+d+';');
+    $('#escape').val(GetEscape(d,h));
+    set(d); 
+}
+
 function ConvertBin() {
-        var b = $('#bin').val();
-        if(b.length>8) return;
-        if(b.length==0) return;
-        d = parseInt(b,2);
-        if(d>255 || d<0) return;
-        c = String.fromCharCode(d);
-        $('#char').val(c);
-        var h=d.toString(16).toUpperCase();
-        while( h.length<2 ) h = "0"+h;
-        b=d.toString(2);
-        while( b.length<8 ) b = "0"+b;
-        $('#dec').val(d);
-        $('#hex').val(h);
-        //$('#bin').val(b);
-        $('#html').val('&#'+d+';');
-        $('#escape').val(GetEscape(d,h));
-    }
+    var b = $('#bin').val();
+    if (b == "") return clear();
+    if(b.length>8) return;
+    if(b.length==0) return;
+    d = parseInt(b,2);
+    if(d>255 || d<0) return;
+    c = String.fromCharCode(d);
+    $('#char').val(c);
+    var h=d.toString(16).toUpperCase();
+    while( h.length<2 ) h = "0"+h;
+    b=d.toString(2);
+    while( b.length<8 ) b = "0"+b;
+    $('#dec').val(d);
+    $('#hex').val(h);
+    //$('#bin').val(b);
+    $('#html').val('&#'+d+';');
+    $('#escape').val(GetEscape(d,h));
+    set(d); 
+}
     </script>
     <head>
         <title>Ascii Table</title>
@@ -223,13 +253,13 @@ function ConvertBin() {
                         <div v-for="code in codes">
                             <table class="ascii">
                                 <tr>
-                                    <th v-for="x in ['dec', 'hex', 'html', 'char']">
-                                        {{ x }}
-                                    </th>
+                                    <th>dec</th>
+                                    <th>hex</th>
+                                    <th>char</th>
                                 </tr>
 
-                                <tr v-for="char in code">
-                                    <td v-for="prop in [ char.dec, char.hex, char.html, char.symbol, ]" data-toggle="tooltip" v-bind:title="char.description"
+                                <tr v-for="char in code" :id="char.dec">
+                                    <td v-for="prop in [ char.dec, char.hex, char.symbol, ]" data-toggle="tooltip" v-bind:title="char.description"
                                     data-delay='{"show": "1", "hide": "1"}'>
                                     <span :class="isChar(char, prop)">
                                         {{ prop }}
@@ -291,14 +321,23 @@ function ConvertBin() {
         codes[i].hex = sprintf("%x", i);
         codes[i].html = sprintf("&#%03d;", i);
         codes[i].oct = sprintf("%o", i);
+        if (codes[i].symbol.length > 1){
+            codes[i].symbol = GetEscape(codes[i].dec, codes[i].hex);
+        }
     }
     console.log(codes);
 
+    let dec = true;
     const vm = new Vue({
         el: '#app',
         data: {
             codes: _.chunk(codes, 32),
-            isChar: (char, prop) => char.symbol === prop ? "char" : "",
+            isChar: (char, prop) => {
+                return char.symbol === prop ? "char"
+                    :  char.dec === prop ? "dec"
+                    :  char.hex === prop ? "hex"
+                    :  "html";
+            }
         },
     });
 
